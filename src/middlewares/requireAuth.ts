@@ -4,7 +4,6 @@ import User from '../models/User.js';
 
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
-  // authorization === 'Bearer laksjdflaksdjasdfklj'
 
   if (!authorization) {
     return res.status(401).send({ error: 'You must be logged in.' });
@@ -13,14 +12,25 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const token = authorization.replace('Bearer ', '');
   jwt.verify(token, 'MY_SECRET_KEY', async (err, payload) => {
     if (err) {
-      return res.status(401).send({ error: 'You must be logged in.' });
+      // Try as refresh token
+      jwt.verify(token, 'REFRESH_SECRET_KEY', async (refreshErr, refreshPayload) => {
+        if (refreshErr) {
+          return res.status(401).send({ error: 'Invalid token.' });
+        }
+        
+        const user = await User.findById((refreshPayload as JwtPayload).userId);
+        if (!user || user.refreshToken !== token) {
+          return res.status(401).send({ error: 'Invalid refresh token.' });
+        }
+        
+        (req as any).user = user;
+        next();
+      });
+    } else {
+      const user = await User.findById((payload as JwtPayload).userId);
+      (req as any).user = user;
+      next();
     }
-
-    const { userId } = payload as JwtPayload & { userId: string };
-
-    const user = await User.findById(userId);
-    (req as any).user = user;
-    next();
   });
 };
 

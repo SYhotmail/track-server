@@ -132,4 +132,41 @@ describe('Auth Routes', () => {
     expect(refreshRes.body.token).toBeDefined();
     expect(refreshRes.body.refreshToken).toBeDefined();
   });
+
+  it('should fail previous token on second signin', async () => {
+    // Signup
+    await request(app)
+      .post('/signup')
+      .send({ email: 'double@test.com', password: 'password' })
+      .expect(200);
+
+    // First signin
+    const firstSignin = await request(app)
+      .post('/signin')
+      .send({ email: 'double@test.com', password: 'password' })
+      .expect(200);
+
+    const firstRefreshToken = firstSignin.body.refreshToken;
+    const firstToken = firstSignin.body.token;
+
+    const secondSignin = await request(app)
+      .post('/signin')
+      .send({ email: 'double@test.com', password: 'password' })
+      .expect(200);
+    
+    const secondRefreshToken = secondSignin.body.refreshToken;
+    const secondToken = secondSignin.body.token;
+
+
+    await request(app)
+        .get("/") 
+        .set('Authorization', `Bearer ${firstToken}`)
+        .expect(200);
+
+    await request(app)
+        .get("/") 
+        .set('Authorization', `Bearer ${secondToken}`)
+        .expect(200);
+
+  });
 });
