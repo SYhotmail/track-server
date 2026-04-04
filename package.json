@@ -25,6 +25,6 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/src/__tests__/setup.js"]
+    "setupFilesAfterEnv": ["<rootDir>/src/test-setup.js"]
   }
 }
