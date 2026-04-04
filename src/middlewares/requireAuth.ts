@@ -2,40 +2,39 @@ import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import User from '../models/User.js';
 
+const getErrorMessage = (devMessage: string): string => {
+  return process.env.NODE_ENV === 'development' ? devMessage : 'Unauthorized';
+};
+
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
 
   if (!authorization) {
-    const errorMsg = process.env.NODE_ENV === 'development' ? 'You must be logged in.' : 'Unauthorized';
-    return res.status(401).send({ error: errorMsg });
+    return res.status(401).send({ error: getErrorMessage('You must be logged in.') });
   }
 
   const token = authorization.replace('Bearer ', '');
   jwt.verify(token, 'MY_SECRET_KEY', async (err, payload) => {
     if (err) {
-      const errorMsg = process.env.NODE_ENV === 'development' ? 'You must be logged in.' : 'Unauthorized';
-      return res.status(401).send({ error: errorMsg });
+      return res.status(401).send({ error: getErrorMessage('You must be logged in.') });
     }
 
     const { userId } = payload as JwtPayload & { userId: string };
     const user = await User.findById(userId);
     
     if (!user) {
-      const errorMsg = process.env.NODE_ENV === 'development' ? 'User not found.' : 'Unauthorized';
-      return res.status(401).send({ error: errorMsg });
+      return res.status(401).send({ error: getErrorMessage('User not found.') });
     }
     
     if (!user.refreshToken) {
-      const errorMsg = process.env.NODE_ENV === 'development' ? 'Invalid session.' : 'Unauthorized';
-      return res.status(401).send({ error: errorMsg });
+      return res.status(401).send({ error: getErrorMessage('Invalid session.') });
     }
     
     // Verify refresh token is valid
     try {
       jwt.verify(user.refreshToken, 'REFRESH_SECRET_KEY');
     } catch (refreshErr) {
-      const errorMsg = process.env.NODE_ENV === 'development' ? 'Invalid refresh token.' : 'Unauthorized';
-      return res.status(401).send({ error: errorMsg });
+      return res.status(401).send({ error: getErrorMessage('Invalid refresh token.') });
     }
     
     (req as any).user = user;
