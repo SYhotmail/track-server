@@ -69,5 +69,28 @@ describe('Auth Routes', () => {
       .expect(200);
 
     expect(res.body.token).toBeDefined();
+    expect(res.body.refreshToken).toBeDefined();
+  });
+
+  it('should logout and invalidate refresh token', async () => {
+    const signupRes = await request(app)
+      .post('/signup')
+      .send({ email: 'logout@test.com', password: 'password' })
+      .expect(200);
+
+    const token = signupRes.body.token;
+    const refreshToken = signupRes.body.refreshToken;
+
+    // Logout
+    await request(app)
+      .post('/logout')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    // Try to refresh with old refresh token - should fail
+    await request(app)
+      .post('/refresh')
+      .send({ refreshToken })
+      .expect(401);
   });
 });

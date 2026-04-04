@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import requireAuth from '../middlewares/requireAuth.js';
 
 const router = express.Router();
 
@@ -78,10 +79,21 @@ router.post('/refresh', async (req: express.Request, res: express.Response) => {
     }
 
     const newToken = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY', { expiresIn: '15m' });
-    res.send({ token: newToken });
+    const newRefreshToken = jwt.sign({ userId: user._id }, 'REFRESH_SECRET_KEY');
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    res.send({ token: newToken, refreshToken: newRefreshToken });
   } catch (err) {
     return res.status(401).send({ error: 'Invalid refresh token' });
   }
+});
+
+router.post('/logout', requireAuth, async (req: express.Request, res: express.Response) => {
+  const user = (req as any).user;
+  user.refreshToken = undefined;
+  await user.save();
+  res.send({ message: 'Logged out successfully' });
 });
 
 export default router;
