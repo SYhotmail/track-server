@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 
 mongoose.set('strictQuery', false);
 
-const mongoUri = `mongodb+srv://yakushevichsv_db_user:${process.env.DB_PASSWORD}@cluster0.nwugnmg.mongodb.net/?appName=Cluster0`;
+const mongoUri = process.env.MONGO_URI;
 
 if (!mongoUri) {
   throw new Error(
-    `MongoURI was not supplied.  Make sure you watch the video on setting up Mongo DB!`
+    `MongoURI was not supplied. Make sure MONGO_URI is set in your .env file!`
   );
 }
 
