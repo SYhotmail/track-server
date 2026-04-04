@@ -23,4 +23,4 @@ const trackSchema = new mongoose.Schema({
   locations: [pointSchema]
 });
 
-mongoose.model('Track', trackSchema);
+module.exports = mongoose.model('Track', trackSchema);
