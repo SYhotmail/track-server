@@ -8,3 +8,5 @@ yarn-error.log*
 .vscode/
 .idea/
 coverage/
+dist/
+*.tsbuildinfo

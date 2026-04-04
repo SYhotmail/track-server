@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
-const User = mongoose.model('User');
+import { Request, Response, NextFunction } from 'express';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import User from '../models/User.js';
 
-module.exports = (req, res, next) => {
+const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
   // authorization === 'Bearer laksjdflaksdjasdfklj'
 
@@ -16,10 +16,12 @@ module.exports = (req, res, next) => {
       return res.status(401).send({ error: 'You must be logged in.' });
     }
 
-    const { userId } = payload;
+    const { userId } = payload as JwtPayload & { userId: string };
 
     const user = await User.findById(userId);
-    req.user = user;
+    (req as any).user = user;
     next();
   });
 };
+
+export default requireAuth;

@@ -1,6 +1,5 @@
-require('dotenv').config();
-
-const mongoose = require('mongoose');
+import 'dotenv/config';
+import mongoose from 'mongoose';
 
 mongoose.set('strictQuery', true);
 
@@ -12,8 +11,8 @@ if (!mongoUri) {
   );
 }
 
-module.exports = () => {
-  return new Promise((resolve, reject) => {
+const connectDB = () => {
+  return new Promise<void>((resolve, reject) => {
     mongoose.connect(mongoUri);
     mongoose.connection.on('connected', () => {
       console.log('Connected to mongo instance');
@@ -25,3 +24,5 @@ module.exports = () => {
     });
   });
 };
+
+export default connectDB;

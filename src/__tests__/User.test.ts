@@ -1,4 +1,4 @@
-const User = require('../models/User');
+import User from '../models/User.js';
 
 describe('User Model', () => {
   it('should create a user', async () => {
@@ -19,6 +19,6 @@ describe('User Model', () => {
     await user.save();
     const foundUser = await User.findOne({ email: 'find@example.com' });
     expect(foundUser).toBeTruthy();
-    expect(foundUser.email).toBe('find@example.com');
+    expect(foundUser!.email).toBe('find@example.com');
   });
 });

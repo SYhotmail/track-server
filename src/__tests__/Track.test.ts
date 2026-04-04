@@ -1,8 +1,8 @@
-const Track = require('../models/Track');
-const User = require('../models/User');
+import Track from '../models/Track.js';
+import User from '../models/User.js';
 
 describe('Track Model', () => {
-  let user;
+  let user: any;
 
   beforeEach(async () => {
     user = new User({

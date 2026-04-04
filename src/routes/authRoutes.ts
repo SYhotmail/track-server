@@ -1,11 +1,10 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const User = mongoose.model('User');
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 const router = express.Router();
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', async (req: express.Request, res: express.Response) => {
   const { email, password } = req.body;
 
   try {
@@ -15,11 +14,11 @@ router.post('/signup', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
     res.send({ token });
   } catch (err) {
-    return res.status(422).send(err.message);
+    return res.status(422).send((err as Error).message);
   }
 });
 
-router.post('/signin', async (req, res) => {
+router.post('/signin', async (req: express.Request, res: express.Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -40,4 +39,4 @@ router.post('/signin', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

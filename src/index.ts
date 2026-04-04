@@ -1,9 +1,9 @@
-require("./models/User");
-require("./models/Track");
-const connectDB = require('./db');
-const app = require('./app');
+import './models/User.js';
+import './models/Track.js';
+import connectDB from './db.js';
+import app from './app.js';
 
-require('dotenv').config();
+import 'dotenv/config';
 
 (async () => {
   try {

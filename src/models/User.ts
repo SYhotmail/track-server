@@ -1,7 +1,13 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
-const userSchema = new mongoose.Schema({
+interface User {
+  email: string;
+  password: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const userSchema = new mongoose.Schema<User>({
   email: {
     type: String,
     unique: true,
@@ -34,9 +40,8 @@ userSchema.pre('save', function(next) {
   });
 });
 
-userSchema.methods.comparePassword = function(candidatePassword) {
+userSchema.methods.comparePassword = function(candidatePassword: string) {
   const user = this;
-
   return new Promise((resolve, reject) => {
     bcrypt.compare(candidatePassword, user.password, (err, isMatch) => {
       if (err) {
@@ -52,4 +57,6 @@ userSchema.methods.comparePassword = function(candidatePassword) {
   });
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model<User>('User', userSchema);
+
+export default User;

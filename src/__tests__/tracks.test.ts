@@ -1,8 +1,8 @@
-const request = require('supertest');
-const app = require('../app');
+import request from 'supertest';
+import app from '../app.js';
 
 describe('Track Routes', () => {
-  let token;
+  let token: string;
 
   beforeEach(async () => {
     // Signup and signin to get token
