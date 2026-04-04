@@ -38,7 +38,6 @@
   "jest": {
     "preset": "ts-jest/presets/default-esm",
     "testEnvironment": "node",
-    "maxWorkers": 1,
     "transform": {
       "^.+\\.ts$": [
         "ts-jest",
