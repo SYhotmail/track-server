@@ -10,7 +10,7 @@ router.post('/signup', async (req: express.Request, res: express.Response) => {
 
   try {
     const user = new User({ email, password });
-    const refreshToken = jwt.sign({ userId: user._id }, 'REFRESH_SECRET_KEY');
+    const refreshToken = jwt.sign({ userId: user._id, rand: Math.random() }, 'REFRESH_SECRET_KEY', { expiresIn: '30d' });
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -54,7 +54,7 @@ router.post('/signin', async (req: express.Request, res: express.Response) => {
   try {
     await user.comparePassword(password);
     const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY', { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ userId: user._id }, 'REFRESH_SECRET_KEY');
+    const refreshToken = jwt.sign({ userId: user._id, rand: Math.random() }, 'REFRESH_SECRET_KEY', { expiresIn: '30d' });
     user.refreshToken = refreshToken;
     await user.save();
     res.send({ token, refreshToken });
@@ -79,7 +79,7 @@ router.post('/refresh', async (req: express.Request, res: express.Response) => {
     }
 
     const newToken = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY', { expiresIn: '15m' });
-    const newRefreshToken = jwt.sign({ userId: user._id }, 'REFRESH_SECRET_KEY');
+    const newRefreshToken = jwt.sign({ userId: user._id, rand: Math.random() }, 'REFRESH_SECRET_KEY', { expiresIn: '30d' });
     user.refreshToken = newRefreshToken;
     await user.save();
 

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-mongoose.set('strictQuery', true);
+mongoose.set('strictQuery', false);
 
 const mongoUri = `mongodb+srv://yakushevichsv_db_user:${process.env.DB_PASSWORD}@cluster0.nwugnmg.mongodb.net/?appName=Cluster0`;
 

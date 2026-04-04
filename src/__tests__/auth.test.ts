@@ -93,4 +93,43 @@ describe('Auth Routes', () => {
       .send({ refreshToken })
       .expect(401);
   });
+
+  it('should invalidate previous refresh token on second signin', async () => {
+    // Signup
+    await request(app)
+      .post('/signup')
+      .send({ email: 'double@test.com', password: 'password' })
+      .expect(200);
+
+    // First signin
+    const firstSignin = await request(app)
+      .post('/signin')
+      .send({ email: 'double@test.com', password: 'password' })
+      .expect(200);
+
+    const firstRefreshToken = firstSignin.body.refreshToken;
+
+    // Second signin
+    const secondSignin = await request(app)
+      .post('/signin')
+      .send({ email: 'double@test.com', password: 'password' })
+      .expect(200);
+
+    const secondRefreshToken = secondSignin.body.refreshToken;
+
+    // Try to refresh with first refresh token - should fail
+    await request(app)
+      .post('/refresh')
+      .send({ refreshToken: firstRefreshToken })
+      .expect(401);
+
+    // Refresh with second refresh token - should succeed
+    const refreshRes = await request(app)
+      .post('/refresh')
+      .send({ refreshToken: secondRefreshToken })
+      .expect(200);
+
+    expect(refreshRes.body.token).toBeDefined();
+    expect(refreshRes.body.refreshToken).toBeDefined();
+  });
 });
