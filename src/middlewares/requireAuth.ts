@@ -30,6 +30,14 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
       return res.status(401).send({ error: errorMsg });
     }
     
+    // Verify refresh token is valid
+    try {
+      jwt.verify(user.refreshToken, 'REFRESH_SECRET_KEY');
+    } catch (refreshErr) {
+      const errorMsg = process.env.NODE_ENV === 'development' ? 'Invalid refresh token.' : 'Unauthorized';
+      return res.status(401).send({ error: errorMsg });
+    }
+    
     (req as any).user = user;
     next();
   });
