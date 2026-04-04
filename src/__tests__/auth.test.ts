@@ -188,4 +188,39 @@ describe('Auth Routes', () => {
       .set('Authorization', `Bearer ${expiredToken}`)
       .expect(401);
   });
+
+  it('should reject access when stored refresh token is expired', async () => {
+    // Create a user and get tokens
+    const signupRes = await request(app)
+      .post('/signup')
+      .send({ email: 'expired-refresh@test.com', password: 'password' })
+      .expect(200);
+
+    const validToken = signupRes.body.token;
+
+    // Manually update the user's refresh token to be expired
+    const jwt = require('jsonwebtoken');
+    const User = require('../models/User.js').default;
+    
+    // Find the user
+    const user = await User.findOne({ email: 'expired-refresh@test.com' });
+    
+    // Create an expired refresh token
+    const expiredRefreshToken = jwt.sign(
+      { userId: user._id, rand: Math.random() },
+      'REFRESH_SECRET_KEY',
+      { expiresIn: '-1s' } // Already expired
+    );
+    
+    // Update the user's refresh token in database
+    user.refreshToken = expiredRefreshToken;
+    await user.save();
+
+    // Try to access protected route with valid access token
+    // Should fail because refresh token is expired
+    await request(app)
+      .get("/")
+      .set('Authorization', `Bearer ${validToken}`)
+      .expect(401);
+  });
 });
