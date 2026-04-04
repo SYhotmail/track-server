@@ -6,24 +6,28 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
 
   if (!authorization) {
-    return res.status(401).send({ error: 'You must be logged in.' });
+    const errorMsg = process.env.NODE_ENV === 'development' ? 'You must be logged in.' : 'Unauthorized';
+    return res.status(401).send({ error: errorMsg });
   }
 
   const token = authorization.replace('Bearer ', '');
   jwt.verify(token, 'MY_SECRET_KEY', async (err, payload) => {
     if (err) {
-      return res.status(401).send({ error: 'You must be logged in.' });
+      const errorMsg = process.env.NODE_ENV === 'development' ? 'You must be logged in.' : 'Unauthorized';
+      return res.status(401).send({ error: errorMsg });
     }
 
     const { userId } = payload as JwtPayload & { userId: string };
     const user = await User.findById(userId);
     
     if (!user) {
-      return res.status(401).send({ error: 'User not found.' });
+      const errorMsg = process.env.NODE_ENV === 'development' ? 'User not found.' : 'Unauthorized';
+      return res.status(401).send({ error: errorMsg });
     }
     
     if (!user.refreshToken) {
-      return res.status(401).send({ error: 'Invalid session.' });
+      const errorMsg = process.env.NODE_ENV === 'development' ? 'Invalid session.' : 'Unauthorized';
+      return res.status(401).send({ error: errorMsg });
     }
     
     (req as any).user = user;
