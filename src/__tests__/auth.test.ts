@@ -133,7 +133,7 @@ describe('Auth Routes', () => {
     expect(refreshRes.body.refreshToken).toBeDefined();
   });
 
-  it('should fail previous token on second signin', async () => {
+  it('should succeed with previous token on second signin', async () => {
     // Signup
     await request(app)
       .post('/signup')
@@ -146,7 +146,6 @@ describe('Auth Routes', () => {
       .send({ email: 'double@test.com', password: 'password' })
       .expect(200);
 
-    const firstRefreshToken = firstSignin.body.refreshToken;
     const firstToken = firstSignin.body.token;
 
     const secondSignin = await request(app)
@@ -154,9 +153,7 @@ describe('Auth Routes', () => {
       .send({ email: 'double@test.com', password: 'password' })
       .expect(200);
     
-    const secondRefreshToken = secondSignin.body.refreshToken;
     const secondToken = secondSignin.body.token;
-
 
     await request(app)
         .get("/") 
@@ -168,5 +165,27 @@ describe('Auth Routes', () => {
         .set('Authorization', `Bearer ${secondToken}`)
         .expect(200);
 
+  });
+
+  it('should reject expired access tokens', async () => {
+    // Create a user first
+    await request(app)
+      .post('/signup')
+      .send({ email: 'expired@test.com', password: 'password' })
+      .expect(200);
+
+    // Create an expired token manually (expires immediately)
+    const jwt = require('jsonwebtoken');
+    const expiredToken = jwt.sign(
+      { userId: 'someUserId' }, 
+      'MY_SECRET_KEY', 
+      { expiresIn: '-1s' } // Already expired
+    );
+
+    // Try to access protected route with expired token
+    await request(app)
+      .get("/")
+      .set('Authorization', `Bearer ${expiredToken}`)
+      .expect(401);
   });
 });
