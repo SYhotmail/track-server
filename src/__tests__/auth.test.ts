@@ -1,5 +1,7 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import app from '../app.js';
+import User from '../models/User.js';
 
 describe('Auth Routes', () => {
   it('should signup a user', async () => {
@@ -175,7 +177,6 @@ describe('Auth Routes', () => {
       .expect(200);
 
     // Create an expired token manually (expires immediately)
-    const jwt = require('jsonwebtoken');
     const expiredToken = jwt.sign(
       { userId: 'someUserId' }, 
       'MY_SECRET_KEY', 
@@ -199,28 +200,80 @@ describe('Auth Routes', () => {
     const validToken = signupRes.body.token;
 
     // Manually update the user's refresh token to be expired
-    const jwt = require('jsonwebtoken');
-    const User = require('../models/User.js').default;
-    
     // Find the user
     const user = await User.findOne({ email: 'expired-refresh@test.com' });
     
     // Create an expired refresh token
     const expiredRefreshToken = jwt.sign(
-      { userId: user._id, rand: Math.random() },
+      { userId: user!._id.toString(), rand: Math.random() },
       'REFRESH_SECRET_KEY',
       { expiresIn: '-1s' } // Already expired
     );
     
     // Update the user's refresh token in database
-    user.refreshToken = expiredRefreshToken;
-    await user.save();
+    user!.refreshToken = expiredRefreshToken;
+    await user!.save();
 
     // Try to access protected route with valid access token
     // Should fail because refresh token is expired
     await request(app)
       .get("/")
       .set('Authorization', `Bearer ${validToken}`)
+      .expect(401);
+  });
+
+  it('should cancel signin when access token is expired', async () => {
+    await request(app)
+      .post('/signup')
+      .send({ email: 'expired-signin@test.com', password: 'password' })
+      .expect(200);
+
+    const user = await User.findOne({ email: 'expired-signin@test.com' });
+    const expiredToken = jwt.sign(
+      { userId: user!._id.toString() },
+      'MY_SECRET_KEY',
+      { expiresIn: '-1s' }
+    );
+
+    await request(app)
+      .post('/signin')
+      .set('Authorization', `Bearer ${expiredToken}`)
+      .expect(401);
+  });
+
+  it('should reject signin when token has no expiration claim', async () => {
+    await request(app)
+      .post('/signup')
+      .send({ email: 'signin-no-exp@test.com', password: 'password' })
+      .expect(200);
+
+    const user = await User.findOne({ email: 'signin-no-exp@test.com' });
+    const tokenWithoutExp = jwt.sign(
+      { userId: user!._id.toString() },
+      'MY_SECRET_KEY'
+    );
+
+    await request(app)
+      .post('/signin')
+      .set('Authorization', `Bearer ${tokenWithoutExp}`)
+      .expect(401);
+  });
+
+  it('should reject protected route when token has no expiration claim', async () => {
+    await request(app)
+      .post('/signup')
+      .send({ email: 'auth-no-exp@test.com', password: 'password' })
+      .expect(200);
+
+    const user = await User.findOne({ email: 'auth-no-exp@test.com' });
+    const tokenWithoutExp = jwt.sign(
+      { userId: user!._id.toString() },
+      'MY_SECRET_KEY'
+    );
+
+    await request(app)
+      .get("/")
+      .set('Authorization', `Bearer ${tokenWithoutExp}`)
       .expect(401);
   });
 });

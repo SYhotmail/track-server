@@ -10,6 +10,10 @@ const sendAuthError = (res: Response, devMessage: string) => {
   return res.status(401).send({ error: getErrorMessage(devMessage) });
 };
 
+const hasExpiration = (payload: JwtPayload | string | undefined): payload is JwtPayload => {
+  return typeof payload !== 'string' && payload !== undefined && typeof payload.exp === 'number';
+};
+
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
 
@@ -18,9 +22,18 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   }
 
   const token = authorization.replace('Bearer ', '');
+
   jwt.verify(token, 'MY_SECRET_KEY', async (err, payload) => {
     if (err) {
-      return sendAuthError(res, 'You must be logged in.');
+      if (err instanceof jwt.TokenExpiredError) {
+        return sendAuthError(res, 'Token has expired.');
+      }
+
+      return sendAuthError(res, 'Invalid token signature.');
+    }
+
+    if (!hasExpiration(payload)) {
+      return sendAuthError(res, 'Token expiration is missing.');
     }
 
     const { userId } = payload as JwtPayload & { userId: string };
