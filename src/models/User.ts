@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 interface User {
   email: string;
   password: string;
+  refreshToken?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -16,6 +17,9 @@ const userSchema = new mongoose.Schema<User>({
   password: {
     type: String,
     required: true
+  },
+  refreshToken: {
+    type: String
   }
 });
 

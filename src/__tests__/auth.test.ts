@@ -9,6 +9,7 @@ describe('Auth Routes', () => {
       .expect(200);
 
     expect(res.body.token).toBeDefined();
+    expect(res.body.refreshToken).toBeDefined();
   });
 
   it('should signin a user', async () => {
@@ -24,6 +25,7 @@ describe('Auth Routes', () => {
       .expect(200);
 
     expect(res.body.token).toBeDefined();
+    expect(res.body.refreshToken).toBeDefined();
   });
 
   it('should not signin with wrong password', async () => {
@@ -51,5 +53,21 @@ describe('Auth Routes', () => {
       .expect(200);
 
     expect(res.body.token).toBe(token);
+  });
+
+  it('should refresh token', async () => {
+    const signupRes = await request(app)
+      .post('/signup')
+      .send({ email: 'refresh@test.com', password: 'password' })
+      .expect(200);
+
+    const refreshToken = signupRes.body.refreshToken;
+
+    const res = await request(app)
+      .post('/refresh')
+      .send({ refreshToken })
+      .expect(200);
+
+    expect(res.body.token).toBeDefined();
   });
 });

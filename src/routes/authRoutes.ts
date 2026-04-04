@@ -9,10 +9,12 @@ router.post('/signup', async (req: express.Request, res: express.Response) => {
 
   try {
     const user = new User({ email, password });
+    const refreshToken = jwt.sign({ userId: user._id }, 'REFRESH_SECRET_KEY');
+    user.refreshToken = refreshToken;
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
-    res.send({ token });
+    const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY', { expiresIn: '15m' });
+    res.send({ token, refreshToken });
   } catch (err) {
     return res.status(422).send((err as Error).message);
   }
@@ -50,10 +52,35 @@ router.post('/signin', async (req: express.Request, res: express.Response) => {
 
   try {
     await user.comparePassword(password);
-    const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
-    res.send({ token });
+    const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY', { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ userId: user._id }, 'REFRESH_SECRET_KEY');
+    user.refreshToken = refreshToken;
+    await user.save();
+    res.send({ token, refreshToken });
   } catch (err) {
     return res.status(422).send({ error: 'Invalid password or email' });
+  }
+});
+
+router.post('/refresh', async (req: express.Request, res: express.Response) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(401).send({ error: 'Refresh token required' });
+  }
+
+  try {
+    const payload = jwt.verify(refreshToken, 'REFRESH_SECRET_KEY') as { userId: string };
+    const user = await User.findById(payload.userId);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).send({ error: 'Invalid refresh token' });
+    }
+
+    const newToken = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY', { expiresIn: '15m' });
+    res.send({ token: newToken });
+  } catch (err) {
+    return res.status(401).send({ error: 'Invalid refresh token' });
   }
 });
 
