@@ -10,14 +10,6 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   }
 
   const token = authorization.replace('Bearer ', '');
-  
-  // Decode token to get expiry info (without verification)
-  const decoded = jwt.decode(token) as JwtPayload;
-  if (decoded && decoded.exp) {
-    const expiresIn = Math.max(0, decoded.exp - Math.floor(Date.now() / 1000));
-    res.set('X-Token-Expires-In', expiresIn.toString());
-  }
-  
   jwt.verify(token, 'MY_SECRET_KEY', async (err, payload) => {
     if (err) {
       return res.status(401).send({ error: 'You must be logged in.' });
@@ -25,6 +17,15 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
 
     const { userId } = payload as JwtPayload & { userId: string };
     const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(401).send({ error: 'User not found.' });
+    }
+    
+    if (!user.refreshToken) {
+      return res.status(401).send({ error: 'Invalid session.' });
+    }
+    
     (req as any).user = user;
     next();
   });
