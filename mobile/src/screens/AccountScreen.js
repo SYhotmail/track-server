@@ -21,7 +21,9 @@ const AccountScreen = () => {
 
 AccountScreen.navigationOptions = {
   title: 'Account',
-  tabBarIcon: <FontAwesome name="gear" size={20} />
+  tabBarIcon: ({ tintColor }) => (
+    <FontAwesome name="gear" size={20} color={tintColor} />
+  ),
 };
 
 const styles = StyleSheet.create({

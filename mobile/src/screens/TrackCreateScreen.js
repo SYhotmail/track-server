@@ -1,7 +1,7 @@
 import '../_mockLocation';
 import React, { useContext, useCallback } from 'react';
 import { StyleSheet } from 'react-native';
-import { withNavigationFocus } from '@react-navigation/core';
+import { withNavigationFocus } from 'react-navigation';
 import { Text } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Map from '../components/Map';
@@ -35,7 +35,9 @@ const TrackCreateScreen = ({ isFocused }) => {
 
 TrackCreateScreen.navigationOptions = {
   title: 'Add Track',
-  tabBarIcon: <FontAwesome name="plus" size={20} />
+  tabBarIcon: ({ tintColor }) => (
+    <FontAwesome name="plus" size={20} color={tintColor} />
+  ),
 };
 
 const styles = StyleSheet.create({
